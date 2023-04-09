@@ -1,4 +1,4 @@
-const List<String> currenciesList = [
+const List<String> kCurrenciesList = [
   'AUD',
   'BRL',
   'CAD',
@@ -22,7 +22,7 @@ const List<String> currenciesList = [
   'ZAR'
 ];
 
-const List<String> cryptoList = [
+const List<String> kCryptoList = [
   'BTC',
   'ETH',
   'LTC',
