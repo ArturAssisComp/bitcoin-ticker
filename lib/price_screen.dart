@@ -1,4 +1,6 @@
+import 'package:bitcoin_ticker/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' as cupertino;
 import 'package:bitcoin_ticker/coin_data.dart';
 
 class PriceScreen extends StatefulWidget {
@@ -9,17 +11,62 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  String _dropdownCurrentValue = kCurrenciesList[0];
+  Widget? _choosingCurrencyWidget;
+  String? _chosenValue;
   final List<DropdownMenuItem<String>> _dropdownMenuItems = [];
+
+  //Cupertino specific attributes
+  final List<Text> _cupertinoPickerMenuItems = [];
+
+  void _initChoosingCurrencyWidgetLists() {
+    if (kUsesCupertino) {
+      for (String currency in kCurrenciesList) {
+        _cupertinoPickerMenuItems.add(Text(currency));
+      }
+    } else {
+      for (String currency in kCurrenciesList) {
+        _dropdownMenuItems.add(DropdownMenuItem(
+          value: currency,
+          child: Text(currency),
+        ));
+      }
+    }
+  }
+
+  Widget _initChoosingCurrencyWidget() {
+    if (kUsesCupertino) {
+      _chosenValue = _cupertinoPickerMenuItems[0].data;
+      return cupertino.CupertinoPicker(
+        itemExtent: 20,
+        onSelectedItemChanged: (selectedIndex) {
+          _chosenValue = _cupertinoPickerMenuItems[selectedIndex].data;
+        },
+        children: _cupertinoPickerMenuItems,
+      );
+    } else {
+      _chosenValue = kCurrenciesList[0];
+      return _getDropDownButton(value: kCurrenciesList[0]);
+    }
+  }
+
+  DropdownButton<String> _getDropDownButton({String? value}) {
+    return DropdownButton<String>(
+        value: value,
+        items: _dropdownMenuItems,
+        onChanged: (newValue) {
+          if (newValue != null) {
+            setState(() {
+              _chosenValue = newValue;
+              _choosingCurrencyWidget = _getDropDownButton(value: newValue);
+            });
+          }
+        });
+  }
 
   @override
   void initState() {
-    for (String currency in kCurrenciesList) {
-      _dropdownMenuItems.add(DropdownMenuItem(
-        value: currency,
-        child: Text(currency),
-      ));
-    }
+    _initChoosingCurrencyWidgetLists();
+    _choosingCurrencyWidget = _initChoosingCurrencyWidget();
     super.initState();
   }
 
@@ -59,14 +106,7 @@ class _PriceScreenState extends State<PriceScreen> {
             alignment: Alignment.center,
             padding: const EdgeInsets.only(bottom: 30.0),
             color: Colors.lightBlue,
-            child: DropdownButton<String>(
-                value: _dropdownCurrentValue,
-                items: _dropdownMenuItems,
-                onChanged: (newValue) {
-                  setState(() {
-                    if (newValue != null) _dropdownCurrentValue = newValue;
-                  });
-                }),
+            child: _choosingCurrencyWidget,
           ),
         ],
       ),
