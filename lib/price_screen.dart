@@ -55,7 +55,7 @@ class _PriceScreenState extends State<PriceScreen> {
     if (kUsesCupertino) {
       _targetCoin = _cupertinoPickerMenuItems[0].data;
       return cupertino.CupertinoPicker(
-        itemExtent: 20,
+        itemExtent: 30,
         onSelectedItemChanged: (selectedIndex) {
           setState(() {
             _targetCoin = _cupertinoPickerMenuItems[selectedIndex].data;
