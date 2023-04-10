@@ -27,8 +27,8 @@ class _PriceScreenState extends State<PriceScreen> {
     required String baseCoin,
     required String targetCoin,
   }) async {
-    double? result =
-        await CoinData.getCoinExchangeRate(baseCoin: 'BTC', targetCoin: 'USD');
+    double? result = await CoinData.getCoinExchangeRate(
+        baseCoin: baseCoin, targetCoin: targetCoin);
     if (result != null) {
       setState(() {
         _targetCoinExchangeRate = result.toStringAsFixed(0);
@@ -57,7 +57,11 @@ class _PriceScreenState extends State<PriceScreen> {
       return cupertino.CupertinoPicker(
         itemExtent: 20,
         onSelectedItemChanged: (selectedIndex) {
-          _targetCoin = _cupertinoPickerMenuItems[selectedIndex].data;
+          setState(() {
+            _targetCoin = _cupertinoPickerMenuItems[selectedIndex].data;
+            _targetCoinExchangeRate = '?';
+          });
+          _updateTargetExchangeRate(baseCoin: 'BTC', targetCoin: _targetCoin!);
         },
         children: _cupertinoPickerMenuItems,
       );
@@ -76,7 +80,10 @@ class _PriceScreenState extends State<PriceScreen> {
             setState(() {
               _targetCoin = newValue;
               _choosingCurrencyWidget = _getDropDownButton(value: newValue);
+              _targetCoinExchangeRate = '?';
             });
+            _updateTargetExchangeRate(
+                baseCoin: 'BTC', targetCoin: _targetCoin!);
           }
         });
   }
@@ -110,7 +117,7 @@ class _PriceScreenState extends State<PriceScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  '1 BTC = $_targetCoinExchangeRate USD',
+                  '1 BTC = $_targetCoinExchangeRate $_targetCoin',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.0,
