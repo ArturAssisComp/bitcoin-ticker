@@ -11,12 +11,30 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
+  //Exchange rate variables
+  String _targetCoinExchangeRate = '?';
+
+  //Choosing currency widget
   Widget? _choosingCurrencyWidget;
-  String? _chosenValue;
+  String? _targetCoin;
   final List<DropdownMenuItem<String>> _dropdownMenuItems = [];
 
   //Cupertino specific attributes
   final List<Text> _cupertinoPickerMenuItems = [];
+
+  //Methods
+  void _updateTargetExchangeRate({
+    required String baseCoin,
+    required String targetCoin,
+  }) async {
+    double? result =
+        await CoinData.getCoinExchangeRate(baseCoin: 'BTC', targetCoin: 'USD');
+    if (result != null) {
+      setState(() {
+        _targetCoinExchangeRate = result.toStringAsFixed(0);
+      });
+    }
+  }
 
   void _initChoosingCurrencyWidgetLists() {
     if (kUsesCupertino) {
@@ -35,16 +53,16 @@ class _PriceScreenState extends State<PriceScreen> {
 
   Widget _initChoosingCurrencyWidget() {
     if (kUsesCupertino) {
-      _chosenValue = _cupertinoPickerMenuItems[0].data;
+      _targetCoin = _cupertinoPickerMenuItems[0].data;
       return cupertino.CupertinoPicker(
         itemExtent: 20,
         onSelectedItemChanged: (selectedIndex) {
-          _chosenValue = _cupertinoPickerMenuItems[selectedIndex].data;
+          _targetCoin = _cupertinoPickerMenuItems[selectedIndex].data;
         },
         children: _cupertinoPickerMenuItems,
       );
     } else {
-      _chosenValue = kCurrenciesList[0];
+      _targetCoin = kCurrenciesList[0];
       return _getDropDownButton(value: kCurrenciesList[0]);
     }
   }
@@ -56,7 +74,7 @@ class _PriceScreenState extends State<PriceScreen> {
         onChanged: (newValue) {
           if (newValue != null) {
             setState(() {
-              _chosenValue = newValue;
+              _targetCoin = newValue;
               _choosingCurrencyWidget = _getDropDownButton(value: newValue);
             });
           }
@@ -67,6 +85,7 @@ class _PriceScreenState extends State<PriceScreen> {
   void initState() {
     _initChoosingCurrencyWidgetLists();
     _choosingCurrencyWidget = _initChoosingCurrencyWidget();
+    _updateTargetExchangeRate(baseCoin: 'BTC', targetCoin: _targetCoin!);
     super.initState();
   }
 
@@ -88,10 +107,10 @@ class _PriceScreenState extends State<PriceScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  '1 BTC = ? USD',
+                  '1 BTC = $_targetCoinExchangeRate USD',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.0,

@@ -1,3 +1,5 @@
+import 'package:bitcoin_ticker/services/networking.dart' as net;
+
 const List<String> kCurrenciesList = [
   'AUD',
   'BRL',
@@ -28,4 +30,10 @@ const List<String> kCryptoList = [
   'LTC',
 ];
 
-class CoinData {}
+class CoinData {
+  static Future<double?> getCoinExchangeRate(
+      {required String baseCoin, required String targetCoin}) async {
+    return await net.getCoinExchangeRate(
+        baseCoin: baseCoin, targetCoin: targetCoin);
+  }
+}
