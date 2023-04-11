@@ -12,7 +12,7 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   //Exchange rate variables
-  String _targetCoinExchangeRate = '?';
+  List<Widget> _result = [];
 
   //Choosing currency widget
   Widget? _choosingCurrencyWidget;
@@ -23,17 +23,16 @@ class _PriceScreenState extends State<PriceScreen> {
   final List<Text> _cupertinoPickerMenuItems = [];
 
   //Methods
-  void _updateTargetExchangeRate({
+  Future<String?> _getTargetExchangeRate({
     required String baseCoin,
     required String targetCoin,
   }) async {
     double? result = await CoinData.getCoinExchangeRate(
         baseCoin: baseCoin, targetCoin: targetCoin);
     if (result != null) {
-      setState(() {
-        _targetCoinExchangeRate = result.toStringAsFixed(0);
-      });
+      return result.toStringAsFixed(0);
     }
+    return null;
   }
 
   void _initChoosingCurrencyWidgetLists() {
@@ -57,11 +56,8 @@ class _PriceScreenState extends State<PriceScreen> {
       return cupertino.CupertinoPicker(
         itemExtent: 30,
         onSelectedItemChanged: (selectedIndex) {
-          setState(() {
-            _targetCoin = _cupertinoPickerMenuItems[selectedIndex].data;
-            _targetCoinExchangeRate = '?';
-          });
-          _updateTargetExchangeRate(baseCoin: 'BTC', targetCoin: _targetCoin!);
+          _targetCoin = _cupertinoPickerMenuItems[selectedIndex].data;
+          _updateResult();
         },
         children: _cupertinoPickerMenuItems,
       );
@@ -77,22 +73,71 @@ class _PriceScreenState extends State<PriceScreen> {
         items: _dropdownMenuItems,
         onChanged: (newValue) {
           if (newValue != null) {
+            _targetCoin = newValue;
             setState(() {
-              _targetCoin = newValue;
-              _choosingCurrencyWidget = _getDropDownButton(value: newValue);
-              _targetCoinExchangeRate = '?';
+              _choosingCurrencyWidget = _getDropDownButton(value: _targetCoin);
             });
-            _updateTargetExchangeRate(
-                baseCoin: 'BTC', targetCoin: _targetCoin!);
+            _updateResult();
           }
         });
+  }
+
+  Card _getResultCard(
+      {required String baseCoin, required String targetCoinExchangeRate}) {
+    return Card(
+      color: Colors.lightBlueAccent,
+      elevation: 5.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+        child: Text(
+          '1 $baseCoin = $targetCoinExchangeRate $_targetCoin',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 20.0,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateResult() async {
+    List<Widget> tmp = [];
+    for (String baseCoin in kCryptoList) {
+      tmp.add(
+        _getResultCard(baseCoin: baseCoin, targetCoinExchangeRate: '?'),
+      );
+      //Waiting
+      setState(() {
+        _result = tmp;
+      });
+    }
+
+    String? targetCoinExchangeRate;
+    tmp = [];
+    for (String baseCoin in kCryptoList) {
+      targetCoinExchangeRate = await _getTargetExchangeRate(
+          baseCoin: baseCoin, targetCoin: _targetCoin!);
+      tmp.add(
+        _getResultCard(
+            baseCoin: baseCoin,
+            targetCoinExchangeRate: targetCoinExchangeRate ?? '???'),
+      );
+      //Final Result
+      setState(() {
+        _result = tmp;
+      });
+    }
   }
 
   @override
   void initState() {
     _initChoosingCurrencyWidgetLists();
     _choosingCurrencyWidget = _initChoosingCurrencyWidget();
-    _updateTargetExchangeRate(baseCoin: 'BTC', targetCoin: _targetCoin!);
+    _updateResult();
     super.initState();
   }
 
@@ -108,23 +153,8 @@ class _PriceScreenState extends State<PriceScreen> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = $_targetCoinExchangeRate $_targetCoin',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            child: Column(
+              children: _result,
             ),
           ),
           Container(
